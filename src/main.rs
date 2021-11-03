@@ -111,7 +111,7 @@ fn print_matchfield(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize)
             } else if matchfield[x][y] == 2 {
                 print('o', x, y, winning_coordinate);
             } else {
-                print('_', x, y, winning_coordinate);
+                print(' ', x, y, winning_coordinate);
             }
             
         }
