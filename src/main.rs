@@ -8,7 +8,8 @@ fn main() {
 
     let max_rounds = X_SIZE * Y_SIZE / 2;
     let mut matchfield: [[u8; 8]; 8] = [[0; 8]; 8];
-    let mut coordinate = (0, 0);
+    let mut coordinate: (usize, usize) = (0, 0);
+    let mut points: u8 = 0;
 
     println!("Max rounds: {}", max_rounds);
 
@@ -17,15 +18,15 @@ fn main() {
             let free_slots: Vec<usize> = get_free_slots(matchfield);
             let chosen_slot: usize = determine_slot(free_slots);
             coordinate = insert_coin(&mut matchfield, player, chosen_slot);
-            let points = determine_horizontal_points(matchfield, player, coordinate);
-            if points > 3 {
+            points = determine_horizontal_points(matchfield, player, coordinate);
+            if points >= 4 {
                 let player_name: char = if player == 1 { 'x' } else { 'o' };
-                println!("Player {} wins at {} {} with {} points", player_name, coordinate.0, coordinate.1, points);
+                println!("Player {} wins at {} {}", player_name, coordinate.0, coordinate.1);
                 break 'outer
             }
         }
     }
-    print_matchfield(matchfield, coordinate)
+    print_result(matchfield, coordinate, points)
 }
 
 // fn determine_winner(matchfield: [[usize; 8]; 8], coordinate: (usize, usize)) {
@@ -95,11 +96,11 @@ fn insert_coin(matchfield: &mut[[u8; 8]; 8], player: u8, x: usize) -> (usize, us
     (x, y)
 }
 
-fn print_matchfield(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize)) {
+fn print_result(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize), points: u8) {
     for y in (0..8).rev() {
         for x in (0..8).rev() {
-            fn print(name: char, x: usize, y: usize, winning_coordinate: (usize, usize)) {
-                if x == winning_coordinate.0 && y == winning_coordinate.1 {
+            fn print(name: char, x: usize, y: usize, winning_coordinate: (usize, usize), points: u8) {
+                if points >= 4 && x == winning_coordinate.0 && y == winning_coordinate.1 {
                     print!("W ")
                 } else {
                     print!("{} ", name)
@@ -107,14 +108,20 @@ fn print_matchfield(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize)
             }
 
             if matchfield[x][y] == 1 {
-                print('x', x, y, winning_coordinate);
+                print('x', x, y, winning_coordinate, points);
             } else if matchfield[x][y] == 2 {
-                print('o', x, y, winning_coordinate);
+                print('o', x, y, winning_coordinate, points);
             } else {
-                print(' ', x, y, winning_coordinate);
+                print(' ', x, y, winning_coordinate, points);
             }
             
         }
         println!()
+    }
+    if points >= 4 {
+        let winner = if matchfield[winning_coordinate.0][winning_coordinate.1] == 1 { 'x' } else { 'o' };
+        println!("\nAnd the winner is {}\n", winner)
+    } else {
+        println!("\nNobody wins\n")
     }
 }
