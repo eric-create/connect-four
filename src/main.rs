@@ -1,31 +1,73 @@
-use std::vec;
+use std::{char, vec};
 
 use rand::Rng;
 
 fn main() {
-    const X_SIZE: usize = 8;
-    const Y_SIZE: usize = 8;
+    const X_SIZE: u8 = 8;
+    const Y_SIZE: u8 = 8;
 
     let max_rounds = X_SIZE * Y_SIZE / 2;
-    let mut matchfield: [[usize; 8]; 8] = [[0; 8]; 8];
+    let mut matchfield: [[u8; 8]; 8] = [[0; 8]; 8];
+    let mut coordinate = (0, 0);
 
     println!("Max rounds: {}", max_rounds);
 
-    for _ in 1..=max_rounds {
+    'outer: for _ in 1..=max_rounds {
         for player in 1..=2 {
             let free_slots: Vec<usize> = get_free_slots(matchfield);
-            let chosen_slot = determine_slot(free_slots);
-            insert_coin(&mut matchfield, player, chosen_slot);
+            let chosen_slot: usize = determine_slot(free_slots);
+            coordinate = insert_coin(&mut matchfield, player, chosen_slot);
+            let points = determine_horizontal_points(matchfield, player, coordinate);
+            if points > 3 {
+                let player_name: char = if player == 1 { 'x' } else { 'o' };
+                println!("Player {} wins at {} {} with {} points", player_name, coordinate.0, coordinate.1, points);
+                break 'outer
+            }
         }
     }
-    print_matchfield(matchfield)
+    print_matchfield(matchfield, coordinate)
 }
 
-// fn determine_winner(matchfield: [[usize; 8]; 8]) {
-//     let mut 
+// fn determine_winner(matchfield: [[usize; 8]; 8], coordinate: (usize, usize)) {
+//     let horizontal_points: usize = 0;
+//     let x = coordinate.0;
+//     let y = coordinate.1;
+
+//     while x - 1 > 0 {
+//         x = x - 1;
+//         if matchfield[x]
+//     }
 // }
 
-fn get_free_slots(matchfield: [[usize; 8]; 8]) -> Vec<usize> {
+fn determine_horizontal_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
+    fn get_direction_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize), direction: isize) -> u8 {
+        let mut points: u8 = 0;
+        let mut x: isize = coordinate.0 as isize;
+        let limit: isize = if direction > 0 { 8 } else { 0 };
+        let calculation = |x, direction| if direction > 0 { x + 1 } else { x - 1};
+   
+        while calculation(x, direction) != limit {
+            x = calculation(x, direction);
+            if x < 0 || x > 8 {
+                break
+            }
+            if matchfield[x as usize][coordinate.1] == player {
+                points += 1;
+            } else {
+                break
+            }
+        }
+        points
+    }
+
+    let horizontal_points: u8 = 
+        get_direction_points(matchfield, player, coordinate, -1)
+        + get_direction_points(matchfield, player, coordinate, 1);
+
+        horizontal_points + 1
+}
+
+fn get_free_slots(matchfield: [[u8; 8]; 8]) -> Vec<usize> {
     let mut free_slots: Vec<usize> = vec![];
     for x in 0..8 {
         if matchfield[x][matchfield[x].len() -1] == 0 {
@@ -36,28 +78,40 @@ fn get_free_slots(matchfield: [[usize; 8]; 8]) -> Vec<usize> {
 }
 
 fn determine_slot(free_slots: Vec<usize>) -> usize {
-    let i = rand::thread_rng().gen_range(0..free_slots.len());
+    let i: usize = rand::thread_rng().gen_range(0..free_slots.len());
     return free_slots[i];
 }
 
-fn insert_coin(matchfield: &mut[[usize; 8]; 8], player: usize, x: usize) {
-    for y in 0..8 {
-        if matchfield[x][y] == 0 {
-            matchfield[x][y] = player;
+fn insert_coin(matchfield: &mut[[u8; 8]; 8], player: u8, x: usize) -> (usize, usize) {
+    let mut y: usize = 0;
+
+    for i in 0..8 {
+        y = i;
+        if matchfield[x][i] == 0 {
+            matchfield[x][i] = player;
             break;
         }
     }
+    (x, y)
 }
 
-fn print_matchfield(matchfield: [[usize; 8]; 8]) {
-    for x in 0..8 {
-        for y in 0..8 {
+fn print_matchfield(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize)) {
+    for y in (0..8).rev() {
+        for x in (0..8).rev() {
+            fn print(name: char, x: usize, y: usize, winning_coordinate: (usize, usize)) {
+                if x == winning_coordinate.0 && y == winning_coordinate.1 {
+                    print!("W ")
+                } else {
+                    print!("{} ", name)
+                }
+            }
+
             if matchfield[x][y] == 1 {
-                print!("x  ")
+                print('x', x, y, winning_coordinate);
             } else if matchfield[x][y] == 2 {
-                print!("o  ")
+                print('o', x, y, winning_coordinate);
             } else {
-                print!("_  ")
+                print('_', x, y, winning_coordinate);
             }
             
         }
