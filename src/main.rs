@@ -10,6 +10,7 @@ fn main() {
     let mut matchfield: [[u8; 8]; 8] = [[0; 8]; 8];
     let mut coordinate: (usize, usize) = (0, 0);
     let mut points: u8 = 0;
+    let mut log: Vec<(usize, usize)> = Vec::new();
 
     println!("Max rounds: {}", max_rounds);
 
@@ -19,6 +20,7 @@ fn main() {
             let chosen_slot: usize = determine_slot(free_slots);
             coordinate = insert_coin(&mut matchfield, player, chosen_slot);
             points = determine_points(matchfield, player, coordinate);
+            log.push(coordinate);
             if points >= 4 {
                 let player_name: char = if player == 1 { 'x' } else { 'o' };
                 println!("Player {} wins at {} {}", player_name, coordinate.0, coordinate.1);
@@ -26,7 +28,7 @@ fn main() {
             }
         }
     }
-    print_result(matchfield, coordinate, points)
+    print_result(matchfield, coordinate, points, log)
 }
 
 fn determine_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
@@ -98,9 +100,9 @@ fn insert_coin(matchfield: &mut[[u8; 8]; 8], player: u8, x: usize) -> (usize, us
     (x, y)
 }
 
-fn print_result(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize), points: u8) {
+fn print_result(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize), points: u8, log: Vec<(usize, usize)>) {
     for y in (0..8).rev() {
-        for x in (0..8).rev() {
+        for x in 0..8 {
             fn print(name: char, x: usize, y: usize, winning_coordinate: (usize, usize), points: u8) {
                 if points >= 4 && x == winning_coordinate.0 && y == winning_coordinate.1 {
                     print!("W ")
@@ -126,4 +128,8 @@ fn print_result(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize), po
     } else {
         println!("\nNobody wins\n")
     }
+    for coordinate in log {
+        print!("{},{} ", coordinate.0, coordinate.1);
+    }
+    println!();
 }
