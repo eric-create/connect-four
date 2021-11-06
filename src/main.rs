@@ -18,7 +18,7 @@ fn main() {
             let free_slots: Vec<usize> = get_free_slots(matchfield);
             let chosen_slot: usize = determine_slot(free_slots);
             coordinate = insert_coin(&mut matchfield, player, chosen_slot);
-            points = determine_horizontal_points(matchfield, player, coordinate);
+            points = determine_points(matchfield, player, coordinate);
             if points >= 4 {
                 let player_name: char = if player == 1 { 'x' } else { 'o' };
                 println!("Player {} wins at {} {}", player_name, coordinate.0, coordinate.1);
@@ -29,30 +29,18 @@ fn main() {
     print_result(matchfield, coordinate, points)
 }
 
-// fn determine_winner(matchfield: [[usize; 8]; 8], coordinate: (usize, usize)) {
-//     let horizontal_points: usize = 0;
-//     let x = coordinate.0;
-//     let y = coordinate.1;
-
-//     while x - 1 > 0 {
-//         x = x - 1;
-//         if matchfield[x]
-//     }
-// }
-
-fn determine_horizontal_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
-    fn get_direction_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize), direction: isize) -> u8 {
+fn determine_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
+    fn get_direction_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize), x_direction: isize, y_direction: isize) -> u8 {
         let mut points: u8 = 0;
         let mut x: isize = coordinate.0 as isize;
-        let limit: isize = if direction > 0 { 8 } else { 0 };
-        let calculation = |x, direction| if direction > 0 { x + 1 } else { x - 1};
+        let mut y: isize = coordinate.1 as isize;
+        let x_limit: isize = if x_direction > 0 { 8 } else { -1 };
+        let y_limit: isize = if y_direction > 0 { 8 } else { -1 };
    
-        while calculation(x, direction) != limit {
-            x = calculation(x, direction);
-            if x < 0 || x > 8 {
-                break
-            }
-            if matchfield[x as usize][coordinate.1] == player {
+        while x + x_direction != x_limit && y + y_direction != y_limit {
+            x = x + x_direction;
+            y = y + y_direction;
+            if matchfield[x as usize][y as usize] == player {
                 points += 1;
             } else {
                 break
@@ -62,11 +50,25 @@ fn determine_horizontal_points(matchfield: [[u8; 8]; 8], player: u8, coordinate:
     }
 
     let horizontal_points: u8 = 
-        get_direction_points(matchfield, player, coordinate, -1)
-        + get_direction_points(matchfield, player, coordinate, 1);
+        get_direction_points(matchfield, player, coordinate, -1, 0)
+        + get_direction_points(matchfield, player, coordinate, 1, 0);
 
-        horizontal_points + 1
+    let vertical_points: u8 = get_direction_points(matchfield, player, coordinate, 0, -1);
+    let mut max_points: u8 = if vertical_points > horizontal_points { vertical_points } else { horizontal_points };
+
+    let upward_points: u8 = 
+        get_direction_points(matchfield, player, coordinate, 1, 1)
+        + get_direction_points(matchfield, player, coordinate, -1, -1);
+    max_points = if upward_points > max_points { upward_points } else { max_points };
+
+    let donward_points: u8 = 
+        get_direction_points(matchfield, player, coordinate, 1, -1)
+        + get_direction_points(matchfield, player, coordinate, -1, 1);
+    max_points = if donward_points > max_points { donward_points } else { max_points };
+
+    max_points + 1
 }
+
 
 fn get_free_slots(matchfield: [[u8; 8]; 8]) -> Vec<usize> {
     let mut free_slots: Vec<usize> = vec![];
