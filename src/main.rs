@@ -1,14 +1,28 @@
 use std::{char, vec};
+use std::fs::File;
+use std::io::prelude::*;
 
 use rand::Rng;
 
 fn main() {
+    let (matchfield, points, log): ([[u8; 8]; 8], u8, Vec<(usize, usize)>) = play();
+    let winner: u8 = print_result(matchfield, points, &log);
+    let path: &str = "./results.txt";
+    let mut file = File::create(path).expect(&format!("Creating the file {} failed!", path));
+    let mut result = format!("{}: ", winner);
+
+    for (x, y) in log {
+        result += &format!("{},{} ", x, y);
+    }
+    file.write_all(result.as_bytes()).expect(&format!("Writing to the file {} failed!", path));
+}
+
+fn play() -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
     const X_SIZE: u8 = 8;
     const Y_SIZE: u8 = 8;
 
     let max_rounds = X_SIZE * Y_SIZE / 2;
     let mut matchfield: [[u8; 8]; 8] = [[0; 8]; 8];
-    let mut coordinate: (usize, usize) = (0, 0);
     let mut points: u8 = 0;
     let mut log: Vec<(usize, usize)> = Vec::new();
 
@@ -18,17 +32,15 @@ fn main() {
         for player in 1..=2 {
             let free_slots: Vec<usize> = get_free_slots(matchfield);
             let chosen_slot: usize = determine_slot(free_slots);
-            coordinate = insert_coin(&mut matchfield, player, chosen_slot);
+            let coordinate = insert_coin(&mut matchfield, player, chosen_slot);
             points = determine_points(matchfield, player, coordinate);
             log.push(coordinate);
             if points >= 4 {
-                let player_name: char = if player == 1 { 'x' } else { 'o' };
-                println!("Player {} wins at {} {}", player_name, coordinate.0, coordinate.1);
                 break 'outer
             }
         }
     }
-    print_result(matchfield, coordinate, points, log)
+    (matchfield, points, log)
 }
 
 fn determine_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
@@ -100,7 +112,9 @@ fn insert_coin(matchfield: &mut[[u8; 8]; 8], player: u8, x: usize) -> (usize, us
     (x, y)
 }
 
-fn print_result(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize), points: u8, log: Vec<(usize, usize)>) {
+fn print_result(matchfield: [[u8; 8]; 8], points: u8, log: &Vec<(usize, usize)>) -> u8 {
+    let winning_coordinate: (usize, usize) = log.last().copied().unwrap();
+
     for y in (0..8).rev() {
         for x in 0..8 {
             fn print(name: char, x: usize, y: usize, winning_coordinate: (usize, usize), points: u8) {
@@ -132,4 +146,6 @@ fn print_result(matchfield: [[u8; 8]; 8], winning_coordinate: (usize, usize), po
         print!("{},{} ", coordinate.0, coordinate.1);
     }
     println!();
+
+    matchfield[winning_coordinate.0][winning_coordinate.1]
 }
