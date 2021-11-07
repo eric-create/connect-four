@@ -5,16 +5,30 @@ use std::io::prelude::*;
 use rand::Rng;
 
 fn main() {
-    let (matchfield, points, log): ([[u8; 8]; 8], u8, Vec<(usize, usize)>) = play();
-    let winner: u8 = print_result(matchfield, points, &log);
+    let results: Vec<String> = create_results(50000);
     let path: &str = "./results.txt";
     let mut file = File::create(path).expect(&format!("Creating the file {} failed!", path));
-    let mut result = format!("{}: ", winner);
+    let mut results_string: String = String::new();
 
-    for (x, y) in log {
-        result += &format!("{},{} ", x, y);
+    for result in results {
+        results_string += &result;
+        results_string += "\n";
     }
-    file.write_all(result.as_bytes()).expect(&format!("Writing to the file {} failed!", path));
+    file.write_all(results_string.as_bytes()).expect(&format!("Writing to the file {} failed!", path));
+}
+
+fn create_results(n: usize) -> Vec<String> {
+    let mut results: Vec<String> = Vec::new();
+    for _ in 0..n {
+        let (matchfield, points, log): ([[u8; 8]; 8], u8, Vec<(usize, usize)>) = play();
+        let winner: u8 = print_result(matchfield, points, &log);
+        let mut result = format!("{}: ", winner);
+        for (x, y) in log {
+            result += &format!("{},{} ", x, y);
+        }
+        results.push(result);
+    }
+    results
 }
 
 fn play() -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
