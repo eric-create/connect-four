@@ -21,7 +21,8 @@ fn create_results(n: usize) -> Vec<String> {
     let mut results: Vec<String> = Vec::new();
     for _ in 0..n {
         let (matchfield, points, log): ([[u8; 8]; 8], u8, Vec<(usize, usize)>) = play();
-        let winner: u8 = print_result(matchfield, points, &log);
+        // print_result(matchfield, points, &log);
+        let winner: u8 = get_winner(matchfield, points, &log);
         let mut result = format!("{}: ", winner);
         for (x, y) in log {
             result += &format!("{},{} ", x, y);
@@ -40,8 +41,6 @@ fn play() -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
     let mut points: u8 = 0;
     let mut log: Vec<(usize, usize)> = Vec::new();
 
-    println!("Max rounds: {}", max_rounds);
-
     'outer: for _ in 1..=max_rounds {
         for player in 1..=2 {
             let free_slots: Vec<usize> = get_free_slots(matchfield);
@@ -57,26 +56,26 @@ fn play() -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
     (matchfield, points, log)
 }
 
-fn determine_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
-    fn get_direction_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize), x_direction: isize, y_direction: isize) -> u8 {
-        let mut points: u8 = 0;
-        let mut x: isize = coordinate.0 as isize;
-        let mut y: isize = coordinate.1 as isize;
-        let x_limit: isize = if x_direction > 0 { 8 } else { -1 };
-        let y_limit: isize = if y_direction > 0 { 8 } else { -1 };
-   
-        while x + x_direction != x_limit && y + y_direction != y_limit {
-            x = x + x_direction;
-            y = y + y_direction;
-            if matchfield[x as usize][y as usize] == player {
-                points += 1;
-            } else {
-                break
-            }
-        }
-        points
-    }
+fn get_direction_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize), x_direction: isize, y_direction: isize) -> u8 {
+    let mut points: u8 = 0;
+    let mut x: isize = coordinate.0 as isize;
+    let mut y: isize = coordinate.1 as isize;
+    let x_limit: isize = if x_direction > 0 { 8 } else { -1 };
+    let y_limit: isize = if y_direction > 0 { 8 } else { -1 };
 
+    while x + x_direction != x_limit && y + y_direction != y_limit {
+        x = x + x_direction;
+        y = y + y_direction;
+        if matchfield[x as usize][y as usize] == player {
+            points += 1;
+        } else {
+            break
+        }
+    }
+    points
+}
+
+fn determine_points(matchfield: [[u8; 8]; 8], player: u8, coordinate: (usize, usize)) -> u8 {
     let horizontal_points: u8 = 
         get_direction_points(matchfield, player, coordinate, -1, 0)
         + get_direction_points(matchfield, player, coordinate, 1, 0);
@@ -126,7 +125,16 @@ fn insert_coin(matchfield: &mut[[u8; 8]; 8], player: u8, x: usize) -> (usize, us
     (x, y)
 }
 
-fn print_result(matchfield: [[u8; 8]; 8], points: u8, log: &Vec<(usize, usize)>) -> u8 {
+fn get_winner(matchfield: [[u8; 8]; 8], points: u8, log: &Vec<(usize, usize)>) -> u8 {
+    let winning_coordinate: (usize, usize) = log.last().copied().unwrap();
+    if points >= 4 {
+        return matchfield[winning_coordinate.0][winning_coordinate.1];
+    } else {
+        return 0;
+    }
+}
+
+fn print_result(matchfield: [[u8; 8]; 8], points: u8, log: &Vec<(usize, usize)>) {
     let winning_coordinate: (usize, usize) = log.last().copied().unwrap();
 
     for y in (0..8).rev() {
@@ -160,6 +168,4 @@ fn print_result(matchfield: [[u8; 8]; 8], points: u8, log: &Vec<(usize, usize)>)
         print!("{},{} ", coordinate.0, coordinate.1);
     }
     println!();
-
-    matchfield[winning_coordinate.0][winning_coordinate.1]
 }
