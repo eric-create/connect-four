@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use rand::Rng;
 
 fn main() {
-    let results: Vec<String> = create_results(50000);
+    let results: Vec<String> = create_results(5);
     let path: &str = "./results.txt";
     let mut file = File::create(path).expect(&format!("Creating the file {} failed!", path));
     let mut results_string: String = String::new();
@@ -20,7 +20,7 @@ fn main() {
 fn create_results(n: usize) -> Vec<String> {
     let mut results: Vec<String> = Vec::new();
     for _ in 0..n {
-        let (matchfield, points, log): ([[u8; 8]; 8], u8, Vec<(usize, usize)>) = play();
+        let (matchfield, points, log): ([[u8; 8]; 8], u8, Vec<(usize, usize)>) = play(32);
         // print_result(matchfield, points, &log);
         let winner: u8 = get_winner(matchfield, points, &log);
         let mut result = format!("{}: ", winner);
@@ -32,7 +32,7 @@ fn create_results(n: usize) -> Vec<String> {
     results
 }
 
-fn play() -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
+fn play(max_round: u8) -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
     const X_SIZE: u8 = 8;
     const Y_SIZE: u8 = 8;
 
@@ -41,16 +41,25 @@ fn play() -> ([[u8; 8]; 8], u8, Vec<(usize, usize)>){
     let mut points: u8 = 0;
     let mut log: Vec<(usize, usize)> = Vec::new();
 
-    'outer: for _ in 1..=max_rounds {
+    'outer: for round in 1..=max_rounds {
         for player in 1..=2 {
             let free_slots: Vec<usize> = get_free_slots(matchfield);
-            let chosen_slot: usize = determine_slot(free_slots);
-            let coordinate = insert_coin(&mut matchfield, player, chosen_slot);
-            points = determine_points(matchfield, player, coordinate);
-            log.push(coordinate);
+            loop {
+                let chosen_slot: usize = determine_slot(&free_slots);
+                let coordinate = insert_coin(&mut matchfield, player, chosen_slot);
+                points = determine_points(matchfield, player, coordinate);
+                if points >= 4 && round != max_round && round != 32 {
+                    continue;
+                }
+                log.push(coordinate);
+                break;
+            }
             if points >= 4 {
                 break 'outer
             }
+        }
+        if round == max_round {
+            break 'outer;
         }
     }
     (matchfield, points, log)
@@ -107,7 +116,7 @@ fn get_free_slots(matchfield: [[u8; 8]; 8]) -> Vec<usize> {
     return free_slots
 }
 
-fn determine_slot(free_slots: Vec<usize>) -> usize {
+fn determine_slot(free_slots: &Vec<usize>) -> usize {
     let i: usize = rand::thread_rng().gen_range(0..free_slots.len());
     return free_slots[i];
 }
